@@ -26,4 +26,4 @@ CREATE TABLE "user_tokens"(
     "user_id" int,
     "token" varchar,
     PRIMARY KEY("user_id","token")
-)
+);
