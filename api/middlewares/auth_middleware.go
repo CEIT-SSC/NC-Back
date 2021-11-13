@@ -1,55 +1,51 @@
 package middlewares
 
 import (
-	"github.com/dgrijalva/jwt-go"
+	"context"
+	error2 "github.com/ceit-ssc/nc_backend/pkg/error"
+	"github.com/ceit-ssc/nc_backend/pkg/repository"
+	"github.com/ceit-ssc/nc_backend/pkg/token"
 	"github.com/gin-gonic/gin"
-	"net/http"
 	"strings"
 )
-func AuthorizeJWT(c *gin.Context) interface{} {
+func IsAuthenticated(c *gin.Context, tokenRepo repository.UserTokens) {
 	tokenHeader := c.GetHeader("Authorization")
-	if tokenHeader == "" {
-		c.Header("Content-Type", "application/json")
-		c.JSON(http.StatusForbidden, gin.H{
-			"error":   true,
-			"message": "missing token",
+	user_id, err:= GetUserID(tokenHeader)
+
+	switch err{
+	case error2.ErrTokenMissing:
+		c.JSON(403,gin.H{
+		"error": err.Error(),
 		})
-		return ""
+		return
+	case error2.ErrInvalidToken:
+		c.JSON(403, gin.H{
+		"error": err.Error(),
+		})
+		return
+	}
+	//TODO: Check if user id is present in token table and then if it was present pass it to next
+
+
+	c.Set("user", user_id)
+	c.Next()
+}
+
+
+func GetUserID(tokenHeader string) (string,error){
+	if tokenHeader == "" {
+		return "", error2.ErrTokenMissing
 	}
 	//The token normally comes in format `Bearer {token-body}`, we check if the retrieved token matched this requirement
 	splitted := strings.Split(tokenHeader, " ")
 	if len(splitted) != 2 {
-		c.JSON(http.StatusForbidden, gin.H{
-			"message": "Invalid/Malformed auth token",
-		})
-		c.Header("Content-Type", "application/json")
-		return ""
+		return "", error2.ErrInvalidToken
 	}
 	//Grab the token part
 	tokenPart := splitted[1]
-	token, err := jwt.Parse(tokenPart, func(token *jwt.Token) (interface{}, error) {
-		return []byte("key"), nil
-	})
-claims,_:=token.Claims.(jwt.MapClaims)
-	if err != nil { //Malformed token, returns with http code 403 as usual
-		c.JSON(403, gin.H{
-			"error":   true,
-			"message": "Malformed authentication token",
-		})
-		c.Header("Content-Type", "application/json")
-		return ""
+	user_id, err := token.GetUserID(context.Background(), tokenPart)
+	if err != nil{
+		return "", error2.ErrInvalidToken
 	}
-
-	if !token.Valid { //Token is invalid, maybe not signed on this server
-		c.JSON(http.StatusForbidden, gin.H{
-			"message": "Malformed authentication token",
-		})
-		c.Header("Content-Type", "application/json")
-		return ""
-	}
-	//Everything went well, proceed with the request and set the caller to the user retrieved from the parsed token
-	//fmt.Sprintf("User %", tk.input) //Useful for monitoring
-	c.Set("user", claims["user_id"])
-	c.Next()
-	return claims["user_id"]
+	return user_id, nil
 }

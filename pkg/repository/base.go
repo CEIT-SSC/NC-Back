@@ -1,4 +1,4 @@
-package models
+package repository
 
 import (
 	"database/sql"
@@ -9,7 +9,8 @@ import (
 	"os"
 )
 
-var CreateConnection = func() *sql.DB {
+
+func CreateConnection() *sql.DB {
 	// Open the connection
 	err := godotenv.Load(".env")
 

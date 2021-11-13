@@ -19,11 +19,16 @@ func NewServer(userModule *modules.UserModule, roomModule *modules.RoomModule)*S
 	}
 }
 
+
+
 func (s *Server) StartServer(){
 
 }
 
 
+//TODO: add these routes
+//     /user/register: should create user (using modules) and their empty rooms
+//     /user/login: should return token
 
 func setupRoutes(){
 

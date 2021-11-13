@@ -3,44 +3,53 @@ package repository
 import (
 	"context"
 	"database/sql"
-	"fmt"
-	"github.com/ceit-ssc/nc_backend/pkg/models"
 	"github.com/pkg/errors"
 )
 
 type UserTokens interface {
 	CreateNewToken(ctx context.Context, userID int, token string) error
 	GetUserTokens(ctx context.Context, userID int) ([]string, error)
+	RemoveToken(ctx context.Context, token string) error
 }
 
-func CreateNewToken(ctx context.Context, userID int, token string) error {
-	db := models.CreateConnection()
-	defer db.Close()
+type UserTokenImpl struct{
+	db *sql.DB
+}
+
+
+func NewTokenRepo(db *sql.DB) UserTokens{
+	return &UserTokenImpl{db: db}
+}
+
+func (u UserTokenImpl) GetUserTokens(ctx context.Context, userID int) ([]string, error) {
+	sqlStatement := `SELECT * FROM user_tokens WHERE user_id = $1;`
+	row := u.db.QueryRow(sqlStatement, userID)
+	err := row.Scan("token")
+	if err == sql.ErrNoRows {
+		return nil, errors.New("no token found")
+	}
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	return nil, nil
+}
+
+
+func (u UserTokenImpl) CreateNewToken(ctx context.Context, userID int, token string) error {
 	sqlStatement := `INSERT INTO user_tokens (user_id, token)
 	VALUES ($1, $2);`
-	err := db.QueryRow(sqlStatement, userID, token)
+	_, err := u.db.Exec(sqlStatement, userID, token)
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	return errors.WithStack(err)
 	return nil
 }
 
-func GetUserTokens(ctx context.Context, userID int) ([]string, error) {
-	db := models.CreateConnection()
-	defer db.Close()
-	sqlStatement := `SELECT * FROM user_tokens WHERE user_id = $1;`
-	row := db.QueryRow(sqlStatement, userID)
-	err := row.Scan("token")
-	if err == sql.ErrNoRows {
-		fmt.Println("No rows were returned")
-		return Tokens{}, errors.WithStack(err)
+func (u UserTokenImpl) RemoveToken(ctx context.Context, token string) error {
+	_, err := u.db.Exec("DELETE FROM user_tokens WHERE token = $1", token)
+	if err != nil{
+		return err
 	}
-	if err != nil {
-		fmt.Println(err)
-		return Tokens{}, errors.WithStack(err)
-	}
-	return Tokens{}, nil
-	return nil, nil
+	return nil
 }
 

@@ -16,16 +16,6 @@ type User struct {
 	Tokens        []string `json:"-"`
 }
 
-var db *PostgresDatabase
-
-type PostgresDatabase struct {
-	sync.Mutex
-	client         *sql.DB
-	username       string
-	password       string
-	student_number int
-}
-
 func CreateUser(ctx context.Context, newUser User) (User, error) {
 	db := CreateConnection()
 	defer db.Close()
