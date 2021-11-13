@@ -6,11 +6,7 @@ import (
 	"net/http"
 	"strings"
 )
-type authCustomClaims struct {
-	input string `json:"name"`
-	jwt.StandardClaims
-}
-func AuthorizeJWT(c *gin.Context) string {
+func AuthorizeJWT(c *gin.Context) interface{} {
 	tokenHeader := c.GetHeader("Authorization")
 	if tokenHeader == "" {
 		c.Header("Content-Type", "application/json")
@@ -31,11 +27,10 @@ func AuthorizeJWT(c *gin.Context) string {
 	}
 	//Grab the token part
 	tokenPart := splitted[1]
-	tk := &authCustomClaims{}
-	token, err := jwt.ParseWithClaims(tokenPart, tk, func(token *jwt.Token) (interface{}, error) {
+	token, err := jwt.Parse(tokenPart, func(token *jwt.Token) (interface{}, error) {
 		return []byte("key"), nil
 	})
-
+claims,_:=token.Claims.(jwt.MapClaims)
 	if err != nil { //Malformed token, returns with http code 403 as usual
 		c.JSON(403, gin.H{
 			"error":   true,
@@ -54,7 +49,7 @@ func AuthorizeJWT(c *gin.Context) string {
 	}
 	//Everything went well, proceed with the request and set the caller to the user retrieved from the parsed token
 	//fmt.Sprintf("User %", tk.input) //Useful for monitoring
-	c.Set("user", tk.input)
+	c.Set("user", claims["user_id"])
 	c.Next()
-	return tk.input
+	return claims["user_id"]
 }
