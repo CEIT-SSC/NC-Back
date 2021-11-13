@@ -83,3 +83,4 @@ func UpdateUserByField(ctx context.Context, user User, fieldName string, value i
 	}
 	return nil
 }
+

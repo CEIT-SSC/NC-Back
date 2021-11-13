@@ -68,3 +68,4 @@ func GetRoomByUser(ctx context.Context, title string, userID int) (Room, error) 
 	return Room{}, nil
 
 }
+
