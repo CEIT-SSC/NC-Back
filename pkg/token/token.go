@@ -5,7 +5,7 @@ import (
 	"github.com/dgrijalva/jwt-go"
 )
 func NewToken(ctx context.Context, input string) (string, error) {
-	claims := jwt.MapClaims{"usere_id":input}
+	claims := jwt.MapClaims{"user_id":input}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
 	//encoded string
