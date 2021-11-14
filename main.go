@@ -18,4 +18,3 @@ func main() {
 	server := api.NewServer(userModule, roomModule)
 	server.StartServer()
 }
-
