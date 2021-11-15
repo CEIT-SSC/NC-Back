@@ -10,7 +10,7 @@ import (
 )
 
 
-func CreateConnection() *sql.DB {
+func CreateConnection() (*sql.DB, error) {
 	// Open the connection
 	err := godotenv.Load(".env")
 
@@ -28,14 +28,14 @@ func CreateConnection() *sql.DB {
 
 	db, err := sql.Open("postgres", dbUri)
 	if err != nil {
-		fmt.Println(err)
+		return nil, err
 	}
 
 	// check the connection
 	err = db.Ping()
 	if err != nil {
-		fmt.Println(err)
+		return nil, err
 	}
 	fmt.Println("Successfully connected!")
-	return db
+	return db, nil
 }

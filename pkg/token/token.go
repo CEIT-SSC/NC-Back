@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/pkg/errors"
+	"strconv"
 )
 func NewToken(ctx context.Context, input string, randomNumber int) (string, error) {
 	claims := jwt.MapClaims{
@@ -27,15 +28,16 @@ func ParseToken(ctx context.Context, token2 string) (*jwt.Token, error){
 	return token, err
 }
 
-func GetUserID(ctx context.Context, token string) (string, error){
+func GetUserID(ctx context.Context, token string) (int, error){
 	parsedToken, err := ParseToken(ctx, token)
 	if err!= nil{
-		return "", err
+		return -1, err
 	}
 	claims, ok := parsedToken.Claims.(jwt.MapClaims)
 	if !ok{
-		return "",errors.New("idk")
+		return -1,errors.New("idk")
 	}
-	return claims["user_id"].(string), nil
+	userIDInt, _ := strconv.Atoi(claims["user_id"].(string))
+	return userIDInt, nil
 }
 

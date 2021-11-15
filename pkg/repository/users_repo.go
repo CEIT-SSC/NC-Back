@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	error2 "github.com/ceit-ssc/nc_backend/pkg/error"
 	"github.com/ceit-ssc/nc_backend/pkg/models"
 	"github.com/pkg/errors"
 )
@@ -71,10 +72,9 @@ func (u UserRepoImpl) GetUserByStudentNumber(ctx context.Context, studentNumber 
 func (u UserRepoImpl) GetUserByUsername(ctx context.Context, username string) (*models.User, error) {
 	user := &models.User{}
 	sqlStatement := `SELECT * FROM users WHERE username=$1;`
-	row := u.db.QueryRow(sqlStatement, username)
-	err := row.Scan(user.ID, user.Username, user.Password, user.StudentNumber, user.Tokens)
+	err := u.db.QueryRow(sqlStatement, username).Scan(user.ID, user.Username, user.Password, user.StudentNumber)
 	if err == sql.ErrNoRows {
-		return nil, errors.New("no user found")
+		return nil, error2.ErrNoUserFound
 	}
 	if err != nil {
 		return nil, errors.WithStack(err)

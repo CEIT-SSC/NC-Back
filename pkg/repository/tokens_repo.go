@@ -10,6 +10,7 @@ type UserTokens interface {
 	CreateNewToken(ctx context.Context, userID int, token string) error
 	GetUserTokens(ctx context.Context, userID int) ([]string, error)
 	RemoveToken(ctx context.Context, token string) error
+	CheckUserId(ctx context.Context, id string) bool
 }
 
 type UserTokenImpl struct {
@@ -20,7 +21,7 @@ func NewTokenRepo(db *sql.DB) UserTokens {
 	return &UserTokenImpl{db: db}
 }
 
-func (u UserTokenImpl) GetUserTokens(ctx context.Context, userID int) ([]string, error) {
+func (u *UserTokenImpl) GetUserTokens(ctx context.Context, userID int) ([]string, error) {
 	sqlStatement := `SELECT * FROM user_tokens WHERE user_id = $1;`
 	row := u.db.QueryRow(sqlStatement, userID)
 	err := row.Scan("token")
@@ -52,7 +53,7 @@ func (u UserTokenImpl) RemoveToken(ctx context.Context, token string) error {
 }
 
 func (u UserTokenImpl) CheckUserId(ctx context.Context, id string) bool {
-	row := u.db.QueryRow("SELECT FROM user_tokens WHERE user_id= $1", id)
+	row := u.db.QueryRow("SELECT * FROM user_tokens WHERE user_id= $1", id)
 	var token string
 	err := row.Scan(&token)
 	if err == sql.ErrNoRows {

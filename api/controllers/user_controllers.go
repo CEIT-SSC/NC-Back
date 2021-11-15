@@ -2,15 +2,19 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 	"github.com/ceit-ssc/nc_backend/internal/modules"
 	error2 "github.com/ceit-ssc/nc_backend/pkg/error"
 	"github.com/ceit-ssc/nc_backend/pkg/models"
+	"github.com/ceit-ssc/nc_backend/pkg/repository"
 	"github.com/ceit-ssc/nc_backend/pkg/token"
 	"github.com/gin-gonic/gin"
 	_ "github.com/pkg/errors"
+	"math/rand"
 )
 
 func RegisterController(module *modules.UserModule) gin.HandlerFunc {
+
 	return func(context *gin.Context) {
 		user := models.User{}
 		err := context.ShouldBindJSON(&user)
@@ -43,10 +47,9 @@ func RegisterController(module *modules.UserModule) gin.HandlerFunc {
 	}
 }
 
-func LoginController(userModule *modules.UserModule) gin.HandlerFunc {
+func LoginController(userModule *modules.UserModule, tokenRepo repository.UserTokens) gin.HandlerFunc {
+
 	return func(ctx *gin.Context) {
-		//TODO: step1: query to userRepo using userModule to get ID
-		//TODO: step2: Create New token using userId
 		user := models.User{}
 		err := ctx.ShouldBindJSON(&user)
 		if err != nil {
@@ -56,21 +59,23 @@ func LoginController(userModule *modules.UserModule) gin.HandlerFunc {
 			})
 			return
 		}
-		err = userModule.LoginUser(ctx, &models.User{})
+
+		userInfo,err := userModule.GetUserByUsername(user.Username)
+		if userInfo == nil && err == error2.ErrNoUserFound{
+			ctx.JSON(422,gin.H{
+				"error":  err.Error(),
+			})
+		}
+
+		UserToken, err := token.NewToken(context.Background(), fmt.Sprintf("%d", userInfo.ID), rand.Int())
 		if err != nil {
 			ctx.JSON(422, gin.H{
 				"error": err.Error(),
 			})
 			return
 		}
-		if err != nil {
-			ctx.JSON(422, gin.H{
-				"error": err.Error(),
-			})
-		}
 
-		userInfo := userModule.GetUserByUsername(user.Username)
-		UserToken, err := token.NewToken(context.Background(), string(rune(userInfo.ID)), 3)
+		err = tokenRepo.CreateNewToken(context.Background(), userInfo.ID, UserToken)
 		if err != nil {
 			ctx.JSON(422, gin.H{
 				"error": err.Error(),
@@ -83,6 +88,14 @@ func LoginController(userModule *modules.UserModule) gin.HandlerFunc {
 			"student_number": userInfo.StudentNumber,
 			"token": UserToken,
 		})
+	}
+
+}
+
+func LogoutController(tokenRepo repository.UserTokens) gin.HandlerFunc {
+
+	return func(ctx *gin.Context) {
+
 	}
 
 }

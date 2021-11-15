@@ -39,10 +39,8 @@ func (r RoomRepoImpl) UpdateRoomByField(ctx context.Context, roomTitle string, u
 }
 
 func (r RoomRepoImpl) DeleteRoom(ctx context.Context, title string, userID int) error {
-	db := CreateConnection()
-	defer db.Close()
 	sqlStatement := `DELETE FROM users WHERE (user_id = $1 AND room_title = $2);`
-	_, err := db.Exec(sqlStatement, userID, title)
+	_, err := r.db.Exec(sqlStatement, userID, title)
 	if err != nil {
 		return errors.WithStack(err)
 	}

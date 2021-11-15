@@ -9,39 +9,40 @@ import (
 	"strings"
 )
 
-func IsAuthenticated(c *gin.Context, tokenRepo repository.UserTokens) {
-	tokenHeader := c.GetHeader("Authorization")
-	user_id, err := GetUserID(tokenHeader)
+func IsAuthenticated (tokenRepo repository.UserTokens) gin.HandlerFunc{
+	return func (c *gin.Context){
+		tokenHeader := c.GetHeader("Authorization")
+		userToken,_ := GetToken(tokenHeader)
+		userID, err := GetUserID(userToken)
 
-	switch err {
-	case error2.ErrTokenMissing:
-		c.JSON(403, gin.H{
-			"error": err.Error(),
-		})
-		return
-	case error2.ErrInvalidToken:
-		c.JSON(403, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
-	//TODO: Check if user id is present in token table and then if it was present pass it to next
+		switch err {
+		case error2.ErrTokenMissing:
+			c.JSON(403, gin.H{
+				"error": err.Error(),
+			})
+			return
+		case error2.ErrInvalidToken:
+			c.JSON(403, gin.H{
+				"error": err.Error(),
+			})
+			return
+		}
+		//TODO: Check if user id is present in token table and then if it was present pass it to next
+		tokens, err := tokenRepo.GetUserTokens(context.Background(), userID)
 
-	c.Set("user", user_id)
-	r := repository.UserTokenImpl{}.CheckUserId(c, user_id)
-	if !r {
-		c.JSON(403, gin.H{
-			"error": error2.ErrNotRegistered,
-		})
-		return
+		tokenExists := tokenExistsOnList(tokens, userToken)
+		if !tokenExists{
+			c.JSON(403, gin.H{
+				"error": "user is not authenticated",
+			})
+			return
+		}
+		c.Set("user_id", userID)
+		c.Next()
 	}
-	c.JSON(200, gin.H{
-		"message": "user is authenticated",
-	})
-	c.Next()
 }
 
-func GetUserID(tokenHeader string) (string, error) {
+func GetToken(tokenHeader string) (string, error){
 	if tokenHeader == "" {
 		return "", error2.ErrTokenMissing
 	}
@@ -51,10 +52,21 @@ func GetUserID(tokenHeader string) (string, error) {
 		return "", error2.ErrInvalidToken
 	}
 	//Grab the token part
-	tokenPart := splitted[1]
-	user_id, err := token.GetUserID(context.Background(), tokenPart)
+	return splitted[1], nil
+}
+
+func GetUserID(tokenPart string) (int, error) {
+	userID, err := token.GetUserID(context.Background(), tokenPart)
 	if err != nil {
-		return "", error2.ErrInvalidToken
+		return -1, error2.ErrInvalidToken
 	}
-	return user_id, nil
+	return userID, nil
+}
+func tokenExistsOnList(tokens []string, userToken string) bool {
+	for _, token2:= range tokens{
+		if token2 == userToken{
+			return true
+		}
+	}
+	return false
 }

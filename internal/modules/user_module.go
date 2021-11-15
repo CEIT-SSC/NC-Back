@@ -11,19 +11,6 @@ type UserModule struct {
 	UserRepo repository.UserRepository
 }
 
-// TODO : implement login method
-func (u *UserModule) LoginUser(ctx context.Context, user *models.User) error {
-	exists, err := u.UserRepo.ExistsByUsernameAndPassword(ctx, user)
-	if err != nil {
-		return err
-	}
-	if !exists {
-		return error2.ErrWrongPass
-	}
-
-	return nil
-}
-
 //TODO: DO me
 func (u *UserModule) RegisterNewUser(user models.User) error {
 
@@ -41,12 +28,12 @@ func (u *UserModule) RegisterNewUser(user models.User) error {
 	return nil
 }
 
-func (u *UserModule) GetUserByUsername(username string)  *models.User{
+func (u *UserModule) GetUserByUsername(username string)  (*models.User,error){
 	user, err := u.UserRepo.GetUserByUsername(context.Background(), username)
 	if err != nil {
-		return nil
+		return nil, err
 	}
-	return user
+	return user, nil
 }
 
 
