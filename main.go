@@ -8,14 +8,17 @@ import (
 
 func main() {
 
-	dbConn := repository.CreateConnection()
+	dbConn, err := repository.CreateConnection()
+	if err != nil{
+		panic(err)
+	}
 	userRepo := repository.NewUserRepo(dbConn)
 	roomRepo := repository.NewRoomRepo(dbConn)
+	tokenRepo := repository.NewTokenRepo(dbConn)
 
 	userModule := &modules.UserModule{UserRepo: userRepo}
 	roomModule := &modules.RoomModule{RoomRepo: roomRepo}
 
-	server := api.NewServer(userModule, roomModule)
+	server := api.NewServer(userModule, roomModule, tokenRepo)
 	server.StartServer()
 }
-

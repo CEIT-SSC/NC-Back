@@ -1,6 +1,14 @@
 package api
 
-import "github.com/ceit-ssc/nc_backend/internal/modules"
+import (
+	"github.com/ceit-ssc/nc_backend/api/controllers"
+	"github.com/ceit-ssc/nc_backend/api/middlewares"
+	"github.com/ceit-ssc/nc_backend/internal/modules"
+	"github.com/ceit-ssc/nc_backend/pkg/repository"
+	"github.com/gin-gonic/gin"
+	"log"
+	"net/http"
+)
 
 //implement router and their handlers here
 
@@ -10,26 +18,31 @@ import "github.com/ceit-ssc/nc_backend/internal/modules"
 type Server struct {
 	UserModule *modules.UserModule
 	RoomModule *modules.RoomModule
+	TokenRepo repository.UserTokens
+	router *gin.Engine
 }
 
-func NewServer(userModule *modules.UserModule, roomModule *modules.RoomModule)*Server{
+func NewServer(userModule *modules.UserModule, roomModule *modules.RoomModule, tokenRepo repository.UserTokens) *Server {
 	return &Server{
 		UserModule: userModule,
 		RoomModule: roomModule,
+		TokenRepo: tokenRepo,
 	}
 }
 
-
-
-func (s *Server) StartServer(){
-
+func (s *Server) StartServer() {
+	log.Fatal(http.ListenAndServe(":8080", s.router))
 }
-
 
 //TODO: add these routes
 //     /user/register: should create user (using modules) and their empty rooms
 //     /user/login: should return token
 
-func setupRoutes(){
+func (s *Server) setupRoutes() {
+	s.router = gin.Default()
+
+	s.router.POST("/user/register", controllers.RegisterController(s.UserModule))
+	s.router.POST("/user/login", controllers.LoginController(s.UserModule, s.TokenRepo))
+	s.router.POST("/user/logout", middlewares.IsAuthenticated(s.TokenRepo), controllers.LogoutController(s.TokenRepo))
 
 }

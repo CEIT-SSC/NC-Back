@@ -3,7 +3,8 @@ CREATE TABLE "users"
     "id"             SERIAL PRIMARY KEY,
     "username"       varchar,
     "password"       varchar,
-    "student_number" int
+    "student_number" int,
+    UNIQUE ("username")
 );
 
 ALTER TABLE users
