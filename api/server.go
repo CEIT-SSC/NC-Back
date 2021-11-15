@@ -4,6 +4,8 @@ import (
 	"github.com/ceit-ssc/nc_backend/api/controllers"
 	"github.com/ceit-ssc/nc_backend/internal/modules"
 	"github.com/gin-gonic/gin"
+	"log"
+	"net/http"
 )
 
 //implement router and their handlers here
@@ -14,6 +16,7 @@ import (
 type Server struct {
 	UserModule *modules.UserModule
 	RoomModule *modules.RoomModule
+	router *gin.Engine
 }
 
 func NewServer(userModule *modules.UserModule, roomModule *modules.RoomModule) *Server {
@@ -24,7 +27,7 @@ func NewServer(userModule *modules.UserModule, roomModule *modules.RoomModule) *
 }
 
 func (s *Server) StartServer() {
-
+	log.Fatal(http.ListenAndServe(":8080", s.router))
 }
 
 //TODO: add these routes
@@ -32,8 +35,9 @@ func (s *Server) StartServer() {
 //     /user/login: should return token
 
 func (s *Server) setupRoutes() {
-	router := gin.Default()
-	router.POST("/user/register", controllers.RegisterController(s.UserModule))
-	router.GET("/user/login", controllers.LoginController(s.UserModule))
+	s.router = gin.Default()
+
+	s.router.POST("/user/register", controllers.RegisterController(s.UserModule))
+	s.router.POST("/user/login", controllers.LoginController(s.UserModule))
 
 }
