@@ -8,31 +8,40 @@ import (
 	"github.com/gin-gonic/gin"
 	"strings"
 )
+
 func IsAuthenticated(c *gin.Context, tokenRepo repository.UserTokens) {
 	tokenHeader := c.GetHeader("Authorization")
-	user_id, err:= GetUserID(tokenHeader)
+	user_id, err := GetUserID(tokenHeader)
 
-	switch err{
+	switch err {
 	case error2.ErrTokenMissing:
-		c.JSON(403,gin.H{
-		"error": err.Error(),
+		c.JSON(403, gin.H{
+			"error": err.Error(),
 		})
 		return
 	case error2.ErrInvalidToken:
 		c.JSON(403, gin.H{
-		"error": err.Error(),
+			"error": err.Error(),
 		})
 		return
 	}
 	//TODO: Check if user id is present in token table and then if it was present pass it to next
 
-
 	c.Set("user", user_id)
+	r := repository.UserTokenImpl{}.CheckUserId(c, user_id)
+	if !r {
+		c.JSON(403, gin.H{
+			"error": error2.ErrNotRegistered,
+		})
+		return
+	}
+	c.JSON(200, gin.H{
+		"message": "user is authenticated",
+	})
 	c.Next()
 }
 
-
-func GetUserID(tokenHeader string) (string,error){
+func GetUserID(tokenHeader string) (string, error) {
 	if tokenHeader == "" {
 		return "", error2.ErrTokenMissing
 	}
@@ -44,7 +53,7 @@ func GetUserID(tokenHeader string) (string,error){
 	//Grab the token part
 	tokenPart := splitted[1]
 	user_id, err := token.GetUserID(context.Background(), tokenPart)
-	if err != nil{
+	if err != nil {
 		return "", error2.ErrInvalidToken
 	}
 	return user_id, nil

@@ -7,3 +7,8 @@ type User struct {
 	StudentNumber int      `json:"student_number"`
 	Tokens        []string `json:"-"`
 }
+
+type LoginUser struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}

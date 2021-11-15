@@ -3,29 +3,30 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"github.com/ceit-ssc/nc_backend/pkg/models"
 	"github.com/pkg/errors"
 )
 
 type UserRepository interface {
 	CreateUser(ctx context.Context, newUser *models.User) error
-	UpdateUserByField(ctx context.Context, user *models.User, fieldName string, value interface{})error
-	GetUserByID(ctx context.Context, userID int) (*models.User,error)
-	GetUserByStudentNumber (ctx context.Context, studentNumber int) (*models.User, error)
+	UpdateUserByField(ctx context.Context, user *models.User, fieldName string, value interface{}) error
+	GetUserByID(ctx context.Context, userID int) (*models.User, error)
+	GetUserByStudentNumber(ctx context.Context, studentNumber int) (*models.User, error)
 }
 
-type UserRepoImpl struct{
+type UserRepoImpl struct {
 	db *sql.DB
 }
 
 func (u UserRepoImpl) CreateUser(ctx context.Context, newUser *models.User) error {
 	sqlStatement := `INSERT INTO users (username, password, student_number)
 	VALUES ($1, $2, $3);`
-	_, err := u.db.Exec(sqlStatement, newUser.ID, newUser.Password, newUser.Password)
+	_, err := u.db.Exec(sqlStatement, newUser.Username, newUser.Password, newUser.StudentNumber)
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	return  nil
+	return nil
 }
 
 func (u UserRepoImpl) UpdateUserByField(ctx context.Context, user *models.User, fieldName string, value interface{}) error {
@@ -40,7 +41,7 @@ func (u UserRepoImpl) UpdateUserByField(ctx context.Context, user *models.User, 
 func (u UserRepoImpl) GetUserByID(ctx context.Context, userID int) (*models.User, error) {
 	user := &models.User{}
 	sqlStatement := `SELECT username, password, student_number FROM users WHERE id=$1;`
-	err := u.db.QueryRow(sqlStatement, userID).Scan(user.Username,user.Password,user.StudentNumber)
+	err := u.db.QueryRow(sqlStatement, userID).Scan(user.Username, user.Password, user.StudentNumber)
 	if err == sql.ErrNoRows {
 		return nil, errors.New("no user found")
 	}
@@ -64,7 +65,42 @@ func (u UserRepoImpl) GetUserByStudentNumber(ctx context.Context, studentNumber 
 	return user, nil
 }
 
-func NewUserRepo(dbConn *sql.DB) UserRepository{
-	return &UserRepoImpl{db: dbConn}
+func (u UserRepoImpl) LoginUser(ctx context.Context, user *models.User) (*models.User, error) {
+	sqlStatement := `SELECT username , password FROM users WHERE username = $1 and password = $2;`
+	var username string
+	var password string
+	row := u.db.QueryRow(sqlStatement, user.Username, user.Password)
+	switch err := row.Scan(&username, &password); err {
+	case sql.ErrNoRows:
+		return nil, errors.New("No user found")
+	case nil:
+		if password == user.Password {
+			return &models.User{}, nil
+		} else {
+			return nil, errors.New("Invalid username and password")
+		}
+	default:
+		fmt.Println(err)
+	}
+	return nil, errors.New("Cannot login user")
 }
 
+func (u UserRepoImpl) RegisterUser(ctx context.Context, user *models.User) error {
+	sqlStatement := `SELECT username , password FROM users WHERE username = $1 and password = $2;`
+	var username string
+	var password string
+	row := u.db.QueryRow(sqlStatement, user.Username, user.Password)
+	switch err := row.Scan(&username, &password); err {
+	case sql.ErrNoRows:
+		return nil
+	case nil:
+		return errors.New("User is already registered")
+	default:
+		fmt.Println(err)
+	}
+	return nil
+}
+
+func NewUserRepo(dbConn *sql.DB) UserRepository {
+	return &UserRepoImpl{db: dbConn}
+}
