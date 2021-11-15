@@ -1,16 +1,18 @@
 package controllers
 
 import (
+	"context"
 	"github.com/ceit-ssc/nc_backend/internal/modules"
+	error2 "github.com/ceit-ssc/nc_backend/pkg/error"
 	"github.com/ceit-ssc/nc_backend/pkg/models"
 	"github.com/gin-gonic/gin"
-	"github.com/pkg/errors"
+	_ "github.com/pkg/errors"
 )
 
 func RegisterController(module *modules.UserModule) gin.HandlerFunc {
 	return func(context *gin.Context) {
-		users := models.User{}
-		err := context.ShouldBindJSON(&users)
+		user := models.User{}
+		err := context.ShouldBindJSON(&user)
 		if err != nil {
 			context.JSON(422, gin.H{
 				"error":   true,
@@ -19,28 +21,48 @@ func RegisterController(module *modules.UserModule) gin.HandlerFunc {
 			return
 		}
 
-		_, err = module.RegisterNewUser(context, users)
-		if err != nil {
-			errors.WithStack(err)
+		err = module.RegisterNewUser(user)
+
+		if err == error2.ErrUserIsRegiseterd {
+			context.JSON(400,gin.H{
+				"error": err.Error(),
+			})
+			return
 		}
+		if err != nil {
+			context.JSON(500,gin.H{
+				"error": err.Error(),
+			})
+			return
+		}
+
+		context.JSON(201, gin.H{
+			"message": "user created successfully",
+		})
 	}
 }
 
-func LoginController(c *gin.Context, modules *modules.UserModule) gin.HandlerFunc {
-	return func(context *gin.Context) {
+func LoginController( userModule *modules.UserModule) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		//TODO: step1: query to userRepo using userModule to get ID
+		 //TODO: step2: Create New token using userId
+
+
+
+
 		userLogin := models.User{}
-		err := context.ShouldBindJSON(&userLogin)
+		err := ctx.ShouldBindJSON(&userLogin)
 		if err != nil {
-			context.JSON(422, gin.H{
+			ctx.JSON(422, gin.H{
 				"error":   true,
 				"message": "invalid request body",
 			})
 			return
 		}
 
-		_, err = modules.LoginUser(c, context, &models.User{})
+		_, err = modules.LoginUser(ctx, &models.User{})//wrong
 		if err != nil {
-			context.JSON(422, gin.H{
+			ctx.JSON(422, gin.H{
 				"error":   true,
 				"message": "cannot login user",
 			})
