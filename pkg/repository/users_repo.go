@@ -13,6 +13,7 @@ type UserRepository interface {
 	UpdateUserByField(ctx context.Context, user *models.User, fieldName string, value interface{}) error
 	GetUserByID(ctx context.Context, userID int) (*models.User, error)
 	GetUserByStudentNumber(ctx context.Context, studentNumber int) (*models.User, error)
+	ExistsByUsernameAndPassword(ctx context.Context, user *models.User) (bool, error)
 }
 
 type UserRepoImpl struct {
@@ -65,24 +66,18 @@ func (u UserRepoImpl) GetUserByStudentNumber(ctx context.Context, studentNumber 
 	return user, nil
 }
 
-func (u UserRepoImpl) LoginUser(ctx context.Context, user *models.User) (*models.User, error) {
+func (u UserRepoImpl) ExistsByUsernameAndPassword(ctx context.Context, user *models.User) (bool, error) {
 	sqlStatement := `SELECT username , password FROM users WHERE username = $1 and password = $2;`
-	var username string
-	var password string
-	row := u.db.QueryRow(sqlStatement, user.Username, user.Password)
-	switch err := row.Scan(&username, &password); err {
-	case sql.ErrNoRows:
-		return nil, errors.New("No user found")
-	case nil:
-		if password == user.Password {
-			return &models.User{}, nil
-		} else {
-			return nil, errors.New("Invalid username and password")
-		}
-	default:
-		fmt.Println(err)
+
+	_, err := u.db.Exec(sqlStatement, user.Username, user.Password)
+	if err == sql.ErrNoRows{
+		return false, nil
 	}
-	return nil, errors.New("Cannot login user")
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
 }
 
 func (u UserRepoImpl) RegisterUser(ctx context.Context, user *models.User) error {
