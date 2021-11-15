@@ -5,6 +5,7 @@ import (
 	"github.com/ceit-ssc/nc_backend/internal/modules"
 	error2 "github.com/ceit-ssc/nc_backend/pkg/error"
 	"github.com/ceit-ssc/nc_backend/pkg/models"
+	"github.com/ceit-ssc/nc_backend/pkg/token"
 	"github.com/gin-gonic/gin"
 	_ "github.com/pkg/errors"
 )
@@ -23,14 +24,14 @@ func RegisterController(module *modules.UserModule) gin.HandlerFunc {
 
 		err = module.RegisterNewUser(user)
 
-		if err == error2.ErrUserIsRegiseterd {
-			context.JSON(400,gin.H{
+		if err == error2.ErrUserIsRegistered {
+			context.JSON(400, gin.H{
 				"error": err.Error(),
 			})
 			return
 		}
 		if err != nil {
-			context.JSON(500,gin.H{
+			context.JSON(500, gin.H{
 				"error": err.Error(),
 			})
 			return
@@ -42,30 +43,46 @@ func RegisterController(module *modules.UserModule) gin.HandlerFunc {
 	}
 }
 
-func LoginController( userModule *modules.UserModule) gin.HandlerFunc {
+func LoginController(userModule *modules.UserModule) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		//TODO: step1: query to userRepo using userModule to get ID
-		 //TODO: step2: Create New token using userId
-
-
-
-
-		userLogin := models.User{}
-		err := ctx.ShouldBindJSON(&userLogin)
+		//TODO: step2: Create New token using userId
+		user := models.User{}
+		err := ctx.ShouldBindJSON(&user)
 		if err != nil {
 			ctx.JSON(422, gin.H{
-				"error":   true,
+				"error":   err.Error(),
 				"message": "invalid request body",
 			})
 			return
 		}
-
-		_, err = modules.LoginUser(ctx, &models.User{})//wrong
+		err = userModule.LoginUser(ctx, &models.User{})
 		if err != nil {
 			ctx.JSON(422, gin.H{
-				"error":   true,
-				"message": "cannot login user",
+				"error": err.Error(),
+			})
+			return
+		}
+		if err != nil {
+			ctx.JSON(422, gin.H{
+				"error": err.Error(),
 			})
 		}
+
+		userInfo := userModule.GetUserByUsername(user.Username)
+		UserToken, err := token.NewToken(context.Background(), string(rune(userInfo.ID)), 3)
+		if err != nil {
+			ctx.JSON(422, gin.H{
+				"error": err.Error(),
+			})
+			return
+		}
+
+		ctx.JSON(200, gin.H{
+			"username": user.Username,
+			"student_number": userInfo.StudentNumber,
+			"token": UserToken,
+		})
 	}
+
 }

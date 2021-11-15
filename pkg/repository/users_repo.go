@@ -13,7 +13,9 @@ type UserRepository interface {
 	UpdateUserByField(ctx context.Context, user *models.User, fieldName string, value interface{}) error
 	GetUserByID(ctx context.Context, userID int) (*models.User, error)
 	GetUserByStudentNumber(ctx context.Context, studentNumber int) (*models.User, error)
+	GetUserByUsername(ctx context.Context, username string) (*models.User, error)
 	ExistsByUsernameAndPassword(ctx context.Context, user *models.User) (bool, error)
+	RegisterUser(ctx context.Context, user *models.User) error
 }
 
 type UserRepoImpl struct {
@@ -57,6 +59,20 @@ func (u UserRepoImpl) GetUserByStudentNumber(ctx context.Context, studentNumber 
 	sqlStatement := `SELECT * FROM users WHERE student_number=$1;`
 	row := u.db.QueryRow(sqlStatement, studentNumber)
 	err := row.Scan(user.Username, user.Password)
+	if err == sql.ErrNoRows {
+		return nil, errors.New("no user found")
+	}
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	return user, nil
+}
+
+func (u UserRepoImpl) GetUserByUsername(ctx context.Context, username string) (*models.User, error) {
+	user := &models.User{}
+	sqlStatement := `SELECT * FROM users WHERE username=$1;`
+	row := u.db.QueryRow(sqlStatement, username)
+	err := row.Scan(user.ID, user.Username, user.Password, user.StudentNumber, user.Tokens)
 	if err == sql.ErrNoRows {
 		return nil, errors.New("no user found")
 	}

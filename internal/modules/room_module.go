@@ -14,12 +14,13 @@ type RoomModule struct {
 	RoomRepo repository.RoomRepository
 }
 
-func (u *UserModule) RegisterNewRoom(ctx context.Context, user models.User) (int, error) {
+func (r *RoomModule) RegisterNewRoom(ctx context.Context, user models.User) (int, error) {
 	for _, roomName := range roomNames {
 		room := models.Room{}
 		room.RoomTitle = roomName
 		room.UserID = user.ID
-		err := repository.RoomRepoImpl{}.CreateRoom(ctx, &room)
+		//TODO create room
+		err := r.RoomRepo.CreateRoom(ctx, &room)
 		if err != nil {
 			return 0, errors.WithStack(err)
 		}
