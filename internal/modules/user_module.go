@@ -2,10 +2,12 @@ package modules
 
 import (
 	"context"
+	error2 "github.com/ceit-ssc/nc_backend/pkg/error"
 	"github.com/ceit-ssc/nc_backend/pkg/models"
 	"github.com/ceit-ssc/nc_backend/pkg/repository"
 	"github.com/ceit-ssc/nc_backend/pkg/token"
 	"github.com/gin-gonic/gin"
+	"github.com/pkg/errors"
 )
 
 type UserModule struct {
@@ -14,7 +16,7 @@ type UserModule struct {
 
 // TODO : implement login method
 func (u *UserModule) LoginUser(c *gin.Context, ctx context.Context, user *models.User) (int, error) {
-	user, err := repository.UserRepoImpl{}.LoginUser(ctx, user)
+	user, err := repository.UserRepoImpl{}.LoginUser(ctx, user) //wrong
 	if err != nil {
 		return 0, err
 	}
@@ -30,14 +32,18 @@ func (u *UserModule) LoginUser(c *gin.Context, ctx context.Context, user *models
 }
 
 //TODO: DO me
-func (u *UserModule) RegisterNewUser(ctx context.Context, user models.User) (int, error) {
-	err := repository.UserRepoImpl{}.RegisterUser(ctx, &user)
+func (u *UserModule) RegisterNewUser(user models.User) (error) {
+
+	exists, err := u.UserRepo.ExistsByUsernameAndPassword(context.Background(), &user)
 	if err != nil {
-		return 0, err
+		return err
 	}
-	err = repository.UserRepoImpl{}.CreateUser(ctx, &user)
+	if exists {
+		return error2.ErrUserIsRegiseterd
+	}
+	err = u.UserRepo.CreateUser(context.Background(), &user)
 	if err != nil {
-		return 0, err
+		return err
 	}
-	return -1, nil
+	return nil
 }
