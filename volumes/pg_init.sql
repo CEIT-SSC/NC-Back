@@ -29,3 +29,5 @@ CREATE TABLE "user_tokens"(
     PRIMARY KEY("user_id","token")
 );
 
+ALTER TABLE rooms
+    OWNER TO test_user;

@@ -1,7 +1,7 @@
 FROM golang:1.17
 
 WORKDIR /go/src/nc_back
-COPY pkg .
+COPY . .
 
 RUN go build ./main.go
 

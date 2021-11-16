@@ -20,8 +20,7 @@ func RegisterController(module *modules.UserModule) gin.HandlerFunc {
 		err := context.ShouldBindJSON(&user)
 		if err != nil {
 			context.JSON(422, gin.H{
-				"error":   true,
-				"message": "invalid request body",
+				"error": err.Error(),
 			})
 			return
 		}

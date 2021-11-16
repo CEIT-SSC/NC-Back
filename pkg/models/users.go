@@ -4,11 +4,15 @@ type User struct {
 	ID            int      `json:"-"`
 	Username      string   `json:"username"`
 	Password      string   `json:"password"`
-	StudentNumber int      `json:"student_number"`
+	StudentNumber string      `json:"student_number"`
 	Tokens        []string `json:"-"`
 }
 
 type LoginUser struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
+}
+type RegisterUser struct{
+	Username string `json:"username"`
+
 }

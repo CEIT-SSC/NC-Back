@@ -17,6 +17,6 @@ services:
       - "5432:5432"
 
   nc_back:
-    build: ../pkg
+    build: .
     ports:
       - "8000:8000"

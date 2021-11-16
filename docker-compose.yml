@@ -7,16 +7,24 @@ services:
     container_name: nc_postgres
     restart: always
     environment:
-      - POSTGRES_USER=test_user
-      - POSTGRES_PASSWORD=test123
-      - POSTGRES_DB=test_db
+      POSTGRES_USER: "test_user"
+      POSTGRES_PASSWORD: "test123"
+      POSTGRES_DB: "test_db"
     volumes:
       - ./volumes/docker/test_db/:/var/lib/postgresql/data/
-      - ./volumes/pg-init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./volumes/pg_init.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
       - "5432:5432"
 
-  nc_back:
-    build: pkg
-    ports:
-      - "8000:8000"
+#  nc_back:
+#    build: .
+#    environment:
+#      POSTGRES_USER: "test_user"
+#      POSTGRES_PASSWORD: "test123"
+#      POSTGRES_DB: "test_db"
+#      POSTGRES_PORT: "5432"
+#      POSTGRES_HOST: "pg_test"
+#    depends_on:
+#      - "pg_test"
+#    ports:
+#      - "8080:8080"

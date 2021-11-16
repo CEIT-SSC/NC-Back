@@ -23,7 +23,9 @@ type Server struct {
 }
 
 func NewServer(userModule *modules.UserModule, roomModule *modules.RoomModule, tokenRepo repository.UserTokens) *Server {
+	router := gin.Default()
 	return &Server{
+		router: router,
 		UserModule: userModule,
 		RoomModule: roomModule,
 		TokenRepo: tokenRepo,
@@ -38,11 +40,9 @@ func (s *Server) StartServer() {
 //     /user/register: should create user (using modules) and their empty rooms
 //     /user/login: should return token
 
-func (s *Server) setupRoutes() {
-	s.router = gin.Default()
+func (s *Server) SetupRoutes() {
 
 	s.router.POST("/user/register", controllers.RegisterController(s.UserModule))
 	s.router.POST("/user/login", controllers.LoginController(s.UserModule, s.TokenRepo))
 	s.router.POST("/user/logout", middlewares.IsAuthenticated(s.TokenRepo), controllers.LogoutController(s.TokenRepo))
-
 }

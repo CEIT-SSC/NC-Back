@@ -11,19 +11,20 @@ import (
 
 
 func CreateConnection() (*sql.DB, error) {
-	// Open the connection
+	//Open the connection
 	err := godotenv.Load(".env")
 
 	if err != nil {
 		log.Fatalf("Error loading .env file")
 	}
 
-	username := os.Getenv("db_user")
-	password := os.Getenv("db_pass")
-	dbName := os.Getenv("db_name")
-	dbHost := os.Getenv("db_host")
+	dbUsername := os.Getenv("POSTGRES_USER")
+	password := os.Getenv("POSTGRES_PASSWORD")
+	dbName := os.Getenv("POSTGRES_DB")
+	dbHost := os.Getenv("POSTGRES_HOST")
+	dbPort := os.Getenv("POSTGRES_PORT")
 
-	dbUri := fmt.Sprintf("host=%s user=%s dbname=%s sslmode=disable password=%s", dbHost, username, dbName, password)
+	dbUri := fmt.Sprintf("host=%s port=%v user=%s password=%s dbname=%s sslmode=disable", dbHost,dbPort,  dbUsername,password, dbName )
 	fmt.Println(dbUri)
 
 	db, err := sql.Open("postgres", dbUri)
