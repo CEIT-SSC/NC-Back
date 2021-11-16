@@ -42,7 +42,7 @@ func (s *Server) StartServer() {
 
 func (s *Server) SetupRoutes() {
 
-	s.router.POST("/user/register", controllers.RegisterController(s.UserModule))
+	s.router.POST("/user/register", controllers.RegisterController(s.UserModule, s.RoomModule))
 	s.router.POST("/user/login", controllers.LoginController(s.UserModule, s.TokenRepo))
 	s.router.POST("/user/logout", middlewares.IsAuthenticated(s.TokenRepo), controllers.LogoutController(s.TokenRepo))
 }
