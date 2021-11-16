@@ -2,6 +2,7 @@ package middlewares
 
 import (
 	"context"
+	"fmt"
 	error2 "github.com/ceit-ssc/nc_backend/pkg/error"
 	"github.com/ceit-ssc/nc_backend/pkg/repository"
 	"github.com/ceit-ssc/nc_backend/pkg/token"
@@ -15,26 +16,23 @@ func IsAuthenticated (tokenRepo repository.UserTokens) gin.HandlerFunc{
 		userToken,_ := GetToken(tokenHeader)
 		userID, err := GetUserID(userToken)
 
-		switch err {
-		case error2.ErrTokenMissing:
+		fmt.Println(userID)
+		if err == error2.ErrInvalidToken || err == error2.ErrTokenMissing {
 			c.JSON(403, gin.H{
-				"error": err.Error(),
+			"error": err.Error(),
 			})
-			return
-		case error2.ErrInvalidToken:
-			c.JSON(403, gin.H{
-				"error": err.Error(),
-			})
+			c.Abort()
 			return
 		}
-		//TODO: Check if user id is present in token table and then if it was present pass it to next
-		tokens, err := tokenRepo.GetUserTokens(context.Background(), userID)
 
+		tokens, err := tokenRepo.GetUserTokens(context.Background(), userID)
+		fmt.Println(tokens, userToken)
 		tokenExists := tokenExistsOnList(tokens, userToken)
 		if !tokenExists{
 			c.JSON(403, gin.H{
 				"error": "user is not authenticated",
 			})
+			c.Abort()
 			return
 		}
 		c.Set("user_id", userID)
