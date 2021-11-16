@@ -13,11 +13,12 @@ import (
 	"math/rand"
 )
 
-func RegisterController(module *modules.UserModule) gin.HandlerFunc {
+func RegisterController(userModule *modules.UserModule, roomModule *modules.RoomModule) gin.HandlerFunc {
 
 	return func(context *gin.Context) {
-		user := models.User{}
-		err := context.ShouldBindJSON(&user)
+
+		user := &models.User{}
+		err := context.ShouldBindJSON(user)
 		if err != nil {
 			context.JSON(422, gin.H{
 				"error": err.Error(),
@@ -25,17 +26,29 @@ func RegisterController(module *modules.UserModule) gin.HandlerFunc {
 			return
 		}
 
-		err = module.RegisterNewUser(user)
-
+		userId, err := userModule.RegisterNewUser(user)
 		if err == error2.ErrUserIsRegistered {
 			context.JSON(400, gin.H{
+				"type": "user_error",
 				"error": err.Error(),
 			})
 			return
 		}
 		if err != nil {
 			context.JSON(500, gin.H{
+				"type": "user_error",
 				"error": err.Error(),
+			})
+			return
+		}
+
+		err = roomModule.CreateRoomForNewUser(userId)
+		if err != nil {
+			userDeleteErr := userModule.DeleteUserByID(userId)
+			context.JSON(500, gin.H{
+				"type": "room_error",
+				"error": err.Error(),
+				"user_delete_error": userDeleteErr,
 			})
 			return
 		}
@@ -49,8 +62,8 @@ func RegisterController(module *modules.UserModule) gin.HandlerFunc {
 func LoginController(userModule *modules.UserModule, tokenRepo repository.UserTokens) gin.HandlerFunc {
 
 	return func(ctx *gin.Context) {
-		user := models.User{}
-		err := ctx.ShouldBindJSON(&user)
+		user := &models.LoginUser{}
+		err := ctx.ShouldBindJSON(user)
 		if err != nil {
 			ctx.JSON(422, gin.H{
 				"error":   err.Error(),
@@ -58,14 +71,20 @@ func LoginController(userModule *modules.UserModule, tokenRepo repository.UserTo
 			})
 			return
 		}
-
+		fmt.Println(user)
 		userInfo,err := userModule.GetUserByUsername(user.Username)
 		if userInfo == nil && err == error2.ErrNoUserFound{
-			ctx.JSON(422,gin.H{
+			ctx.JSON(404,gin.H{
+				"error":  err.Error(),
+				"message": "no user found",
+			})
+		}
+		if err != nil{
+			ctx.JSON(500,gin.H{
 				"error":  err.Error(),
 			})
 		}
-
+		fmt.Println(userInfo)
 		UserToken, err := token.NewToken(context.Background(), fmt.Sprintf("%d", userInfo.ID), rand.Int())
 		if err != nil {
 			ctx.JSON(422, gin.H{
@@ -78,6 +97,7 @@ func LoginController(userModule *modules.UserModule, tokenRepo repository.UserTo
 		if err != nil {
 			ctx.JSON(422, gin.H{
 				"error": err.Error(),
+				"type": "token_repo",
 			})
 			return
 		}
@@ -94,7 +114,6 @@ func LoginController(userModule *modules.UserModule, tokenRepo repository.UserTo
 func LogoutController(tokenRepo repository.UserTokens) gin.HandlerFunc {
 
 	return func(ctx *gin.Context) {
-
 	}
 
 }
