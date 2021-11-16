@@ -3,6 +3,6 @@ FROM golang:1.17
 WORKDIR /go/src/nc_back
 COPY . .
 
-RUN go build ./main.go
+#RUN go run ./main.go
 
-CMD ["./main"]
+CMD ["go","run","main.go"]
