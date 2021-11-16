@@ -12,20 +12,20 @@ type UserModule struct {
 }
 
 //TODO: DO me
-func (u *UserModule) RegisterNewUser(user models.User) error {
+func (u *UserModule) RegisterNewUser(user *models.User) (int,error) {
 
-	exists, err := u.UserRepo.ExistsByUsernameAndPassword(context.Background(), &user)
+	exists, err := u.UserRepo.ExistsByUsernameAndPassword(context.Background(), user.Username, user.Password)
 	if err != nil {
-		return err
+		return -1, err
 	}
 	if exists {
-		return error2.ErrUserIsRegistered
+		return -1, error2.ErrUserIsRegistered
 	}
-	err = u.UserRepo.CreateUser(context.Background(), &user)
+	id, err := u.UserRepo.CreateUser(context.Background(), user)
 	if err != nil {
-		return err
+		return -1, err
 	}
-	return nil
+	return id, nil
 }
 
 func (u *UserModule) GetUserByUsername(username string)  (*models.User,error){
@@ -37,3 +37,6 @@ func (u *UserModule) GetUserByUsername(username string)  (*models.User,error){
 }
 
 
+func (u *UserModule) DeleteUserByID(userID int) error {
+	return u.UserRepo.DeleteUserByID(context.Background(), userID)
+}
