@@ -5,7 +5,6 @@ type User struct {
 	Username      string   `json:"username"`
 	Password      string   `json:"password"`
 	StudentNumber string      `json:"student_number"`
-	Tokens        []string `json:"-"`
 }
 
 type LoginUser struct {
