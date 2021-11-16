@@ -10,27 +10,34 @@ import (
 )
 
 type UserRepository interface {
-	CreateUser(ctx context.Context, newUser *models.User) error
+	CreateUser(ctx context.Context, newUser *models.User) (int,error)
 	UpdateUserByField(ctx context.Context, user *models.User, fieldName string, value interface{}) error
 	GetUserByID(ctx context.Context, userID int) (*models.User, error)
 	GetUserByStudentNumber(ctx context.Context, studentNumber int) (*models.User, error)
 	GetUserByUsername(ctx context.Context, username string) (*models.User, error)
-	ExistsByUsernameAndPassword(ctx context.Context, user *models.User) (bool, error)
+	ExistsByUsernameAndPassword(ctx context.Context,  username string, password string) (bool, error)
 	RegisterUser(ctx context.Context, user *models.User) error
+	DeleteUserByID(ctx context.Context, userID int) error
 }
 
 type UserRepoImpl struct {
 	db *sql.DB
 }
 
-func (u UserRepoImpl) CreateUser(ctx context.Context, newUser *models.User) error {
+func (u UserRepoImpl) DeleteUserByID(ctx context.Context, userID int) error {
+	_, err := u.db.Exec("DELETE FROM users WHERE user_id = $1", userID)
+	return err
+}
+
+func (u UserRepoImpl) CreateUser(ctx context.Context, newUser *models.User) (int, error) {
 	sqlStatement := `INSERT INTO users (username, password, student_number)
-	VALUES ($1, $2, $3);`
-	_, err := u.db.Exec(sqlStatement, newUser.Username, newUser.Password, newUser.StudentNumber)
+	VALUES ($1, $2, $3) RETURNING id;`
+	var id int;
+	err := u.db.QueryRow(sqlStatement, newUser.Username, newUser.Password, newUser.StudentNumber).Scan(&id)
 	if err != nil {
-		return errors.WithStack(err)
+		return -1, errors.WithStack(err)
 	}
-	return nil
+	return id, nil
 }
 
 func (u UserRepoImpl) UpdateUserByField(ctx context.Context, user *models.User, fieldName string, value interface{}) error {
@@ -70,22 +77,23 @@ func (u UserRepoImpl) GetUserByStudentNumber(ctx context.Context, studentNumber 
 }
 
 func (u UserRepoImpl) GetUserByUsername(ctx context.Context, username string) (*models.User, error) {
-	user := &models.User{}
+	user := models.User{}
 	sqlStatement := `SELECT * FROM users WHERE username=$1;`
-	err := u.db.QueryRow(sqlStatement, username).Scan(user.ID, user.Username, user.Password, user.StudentNumber)
+	err := u.db.QueryRow(sqlStatement, username).Scan(&user.ID, &user.Username, &user.Password, &user.StudentNumber)
 	if err == sql.ErrNoRows {
 		return nil, error2.ErrNoUserFound
 	}
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-	return user, nil
+	fmt.Println(user)
+	return &user, nil
 }
 
-func (u UserRepoImpl) ExistsByUsernameAndPassword(ctx context.Context, user *models.User) (bool, error) {
-	sqlStatement := `SELECT username , password FROM users WHERE username = $1 and password = $2;`
-
-	_, err := u.db.Exec(sqlStatement, user.Username, user.Password)
+func (u UserRepoImpl) ExistsByUsernameAndPassword(ctx context.Context, username string, password string) (bool, error) {
+ 	var id int
+	sqlStatement := `SELECT id  FROM users WHERE username = $1 and password = $2;`
+	err := u.db.QueryRow(sqlStatement, username, password).Scan(&id)
 	if err == sql.ErrNoRows{
 		return false, nil
 	}
@@ -93,7 +101,7 @@ func (u UserRepoImpl) ExistsByUsernameAndPassword(ctx context.Context, user *mod
 		return false, err
 	}
 
-	return true, nil
+	return id != 0, nil
 }
 
 func (u UserRepoImpl) RegisterUser(ctx context.Context, user *models.User) error {
