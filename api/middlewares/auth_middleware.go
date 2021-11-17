@@ -10,16 +10,16 @@ import (
 	"strings"
 )
 
-func IsAuthenticated (tokenRepo repository.UserTokens) gin.HandlerFunc{
-	return func (c *gin.Context){
+func IsAuthenticated(tokenRepo repository.UserTokens) gin.HandlerFunc {
+	return func(c *gin.Context) {
 		tokenHeader := c.GetHeader("Authorization")
-		userToken,_ := GetToken(tokenHeader)
+		userToken, _ := GetToken(tokenHeader)
 		userID, err := GetUserID(userToken)
 
 		fmt.Println(userID)
 		if err == error2.ErrInvalidToken || err == error2.ErrTokenMissing {
 			c.JSON(403, gin.H{
-			"error": err.Error(),
+				"error": err.Error(),
 			})
 			c.Abort()
 			return
@@ -28,19 +28,20 @@ func IsAuthenticated (tokenRepo repository.UserTokens) gin.HandlerFunc{
 		tokens, err := tokenRepo.GetUserTokens(context.Background(), userID)
 		fmt.Println(tokens, userToken)
 		tokenExists := tokenExistsOnList(tokens, userToken)
-		if !tokenExists{
+		if !tokenExists {
 			c.JSON(403, gin.H{
 				"error": "user is not authenticated",
 			})
 			c.Abort()
 			return
 		}
+		c.Set("token", userToken)
 		c.Set("user_id", userID)
 		c.Next()
 	}
 }
 
-func GetToken(tokenHeader string) (string, error){
+func GetToken(tokenHeader string) (string, error) {
 	if tokenHeader == "" {
 		return "", error2.ErrTokenMissing
 	}
@@ -61,8 +62,8 @@ func GetUserID(tokenPart string) (int, error) {
 	return userID, nil
 }
 func tokenExistsOnList(tokens []string, userToken string) bool {
-	for _, token2:= range tokens{
-		if token2 == userToken{
+	for _, token2 := range tokens {
+		if token2 == userToken {
 			return true
 		}
 	}

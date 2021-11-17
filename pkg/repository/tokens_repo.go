@@ -9,7 +9,7 @@ import (
 type UserTokens interface {
 	CreateNewToken(ctx context.Context, userID int, token string) error
 	GetUserTokens(ctx context.Context, userID int) ([]string, error)
-	RemoveToken(ctx context.Context, token string) error
+	RemoveToken(ctx context.Context, token string, id int) error
 	CheckUserId(ctx context.Context, id string) bool
 }
 
@@ -32,7 +32,7 @@ func (u *UserTokenImpl) GetUserTokens(ctx context.Context, userID int) ([]string
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-	for rows.Next(){
+	for rows.Next() {
 		var token string
 		err := rows.Scan(&token)
 		if err != nil {
@@ -53,10 +53,10 @@ func (u UserTokenImpl) CreateNewToken(ctx context.Context, userID int, token str
 	return nil
 }
 
-func (u UserTokenImpl) RemoveToken(ctx context.Context, token string) error {
-	_, err := u.db.Exec("DELETE FROM user_tokens WHERE token = $1", token)
+func (u UserTokenImpl) RemoveToken(ctx context.Context, token string, id int) error {
+	_, err := u.db.Exec("DELETE FROM user_tokens WHERE token = $1 and user_id = $2", token, id)
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	return nil
 }

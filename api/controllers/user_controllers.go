@@ -11,6 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 	_ "github.com/pkg/errors"
 	"math/rand"
+	"strconv"
 	"time"
 )
 
@@ -30,14 +31,14 @@ func RegisterController(userModule *modules.UserModule, roomModule *modules.Room
 		userId, err := userModule.RegisterNewUser(user)
 		if err == error2.ErrUserIsRegistered {
 			context.JSON(400, gin.H{
-				"type": "user_error",
+				"type":  "user_error",
 				"error": err.Error(),
 			})
 			return
 		}
 		if err != nil {
 			context.JSON(500, gin.H{
-				"type": "user_error",
+				"type":  "user_error",
 				"error": err.Error(),
 			})
 			return
@@ -47,8 +48,8 @@ func RegisterController(userModule *modules.UserModule, roomModule *modules.Room
 		if err != nil {
 			userDeleteErr := userModule.DeleteUserByID(userId)
 			context.JSON(500, gin.H{
-				"type": "room_error",
-				"error": err.Error(),
+				"type":              "room_error",
+				"error":             err.Error(),
 				"user_delete_error": userDeleteErr,
 			})
 			return
@@ -73,16 +74,16 @@ func LoginController(userModule *modules.UserModule, tokenRepo repository.UserTo
 			})
 			return
 		}
-		userInfo,err := userModule.GetUserByUsername(user.Username)
-		if userInfo == nil && err == error2.ErrNoUserFound{
-			ctx.JSON(404,gin.H{
-				"error":  err.Error(),
+		userInfo, err := userModule.GetUserByUsername(user.Username)
+		if userInfo == nil && err == error2.ErrNoUserFound {
+			ctx.JSON(404, gin.H{
+				"error":   err.Error(),
 				"message": "no user found",
 			})
 		}
-		if err != nil{
-			ctx.JSON(500,gin.H{
-				"error":  err.Error(),
+		if err != nil {
+			ctx.JSON(500, gin.H{
+				"error": err.Error(),
 			})
 		}
 		UserToken, err := token.NewToken(context.Background(), fmt.Sprintf("%d", userInfo.ID), rand.Int())
@@ -97,23 +98,29 @@ func LoginController(userModule *modules.UserModule, tokenRepo repository.UserTo
 		if err != nil {
 			ctx.JSON(422, gin.H{
 				"error": err.Error(),
-				"type": "token_repo",
+				"type":  "token_repo",
 			})
 			return
 		}
 
 		ctx.JSON(200, gin.H{
-			"username": user.Username,
+			"username":       user.Username,
 			"student_number": userInfo.StudentNumber,
-			"token": UserToken,
+			"token":          UserToken,
 		})
 	}
 
 }
 
-func LogoutController(tokenRepo repository.UserTokens) gin.HandlerFunc {
+func LogoutController(tokenRepo repository.UserTokens, tokenModule *modules.TokenModule) gin.HandlerFunc {
 
 	return func(ctx *gin.Context) {
+		user_token, _ := ctx.Get("token")
+		user_id, _ := ctx.Get("user_id")
+		user_id_int, _ := strconv.Atoi(fmt.Sprintf("%d", user_id))
+		fmt.Println(user_id_int)
+		fmt.Println(user_token)
+		tokenModule.RemoveToken(context.Background(), fmt.Sprintf("%s", user_token), user_id_int)
 		fmt.Println(ctx.Get("user_id"))
 	}
 
