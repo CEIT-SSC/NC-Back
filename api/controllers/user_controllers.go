@@ -117,10 +117,10 @@ func LogoutController(tokenModule *modules.TokenModule) gin.HandlerFunc {
 		userToken, _ := ctx.Get("token")
 		userId, _ := ctx.Get("user_id")
 		userIdInt, _ := strconv.Atoi(fmt.Sprintf("%d", userId))
-		fmt.Println(userIdInt)
-		fmt.Println(userToken)
 		tokenModule.RemoveToken(context.Background(), fmt.Sprintf("%s", userToken), userIdInt)
-		fmt.Println(ctx.Get("user_id"))
+		ctx.JSON(200, gin.H{
+			"message": "user logged out successfully",
+		})
 	}
 
 }
