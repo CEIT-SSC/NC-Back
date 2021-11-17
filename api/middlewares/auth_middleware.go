@@ -2,7 +2,6 @@ package middlewares
 
 import (
 	"context"
-	"fmt"
 	error2 "github.com/ceit-ssc/nc_backend/pkg/error"
 	"github.com/ceit-ssc/nc_backend/pkg/repository"
 	"github.com/ceit-ssc/nc_backend/pkg/token"
@@ -15,7 +14,6 @@ func IsAuthenticated(tokenRepo repository.UserTokens) gin.HandlerFunc {
 		tokenHeader := c.GetHeader("Authorization")
 		userToken, _ := GetToken(tokenHeader)
 		userID, err := GetUserID(userToken)
-		fmt.Println(userToken)
 		if err == error2.ErrInvalidToken || err == error2.ErrTokenMissing {
 			c.JSON(403, gin.H{
 				"error": err.Error(),
