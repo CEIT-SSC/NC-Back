@@ -15,8 +15,7 @@ func IsAuthenticated(tokenRepo repository.UserTokens) gin.HandlerFunc {
 		tokenHeader := c.GetHeader("Authorization")
 		userToken, _ := GetToken(tokenHeader)
 		userID, err := GetUserID(userToken)
-
-		fmt.Println(userID)
+		fmt.Println(userToken)
 		if err == error2.ErrInvalidToken || err == error2.ErrTokenMissing {
 			c.JSON(403, gin.H{
 				"error": err.Error(),
@@ -26,7 +25,6 @@ func IsAuthenticated(tokenRepo repository.UserTokens) gin.HandlerFunc {
 		}
 
 		tokens, err := tokenRepo.GetUserTokens(context.Background(), userID)
-		fmt.Println(tokens, userToken)
 		tokenExists := tokenExistsOnList(tokens, userToken)
 		if !tokenExists {
 			c.JSON(403, gin.H{

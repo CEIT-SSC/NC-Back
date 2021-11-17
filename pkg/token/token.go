@@ -2,6 +2,7 @@ package token
 
 import (
 	"context"
+	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/pkg/errors"
 	"strconv"
@@ -18,6 +19,7 @@ func NewToken(ctx context.Context, input string, randomNumber int) (string, erro
 	if err != nil {
 		return t, err
 	}
+
 	return t, nil
 }
 
@@ -25,19 +27,26 @@ func ParseToken(ctx context.Context, token2 string) (*jwt.Token, error){
 	token, err := jwt.Parse(token2, func(token *jwt.Token) (interface{}, error) {
 		return []byte("key"), nil
 	})
+	for key, val := range token.Claims.(jwt.MapClaims) {
+		fmt.Printf("Key: %v, value: %v\n", key, val)
+	}
+	fmt.Println(err)
 	return token, err
 }
 
 func GetUserID(ctx context.Context, token string) (int, error){
 	parsedToken, err := ParseToken(ctx, token)
 	if err!= nil{
+		fmt.Println("test2")
 		return -1, err
 	}
 	claims, ok := parsedToken.Claims.(jwt.MapClaims)
 	if !ok{
+		fmt.Println("test1")
 		return -1,errors.New("idk")
 	}
 	userIDInt, _ := strconv.Atoi(claims["user_id"].(string))
+	fmt.Println("test3")
 	return userIDInt, nil
 }
 
