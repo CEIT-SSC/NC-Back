@@ -112,13 +112,15 @@ func LoginController(userModule *modules.UserModule, tokenRepo repository.UserTo
 
 }
 
-func LogoutController(tokenModule *modules.TokenModule) gin.HandlerFunc {
+func LogoutController( tokenModule *modules.TokenModule) gin.HandlerFunc {
 
 	return func(ctx *gin.Context) {
-		userToken, _ := ctx.Get("token")
-		userId, _ := ctx.Get("user_id")
-		userIdInt, _ := strconv.Atoi(fmt.Sprintf("%d", userId))
-		tokenModule.RemoveToken(context.Background(), fmt.Sprintf("%s", userToken), userIdInt)
+		user_token, _ := ctx.Get("token")
+		user_id, _ := ctx.Get("user_id")
+		user_id_int, _ := strconv.Atoi(fmt.Sprintf("%d", user_id))
+		fmt.Println(user_id_int)
+		fmt.Println(user_token)
+		tokenModule.RemoveToken(context.Background(), fmt.Sprintf("%s", user_token), user_id_int)
 		fmt.Println(ctx.Get("user_id"))
 	}
 
