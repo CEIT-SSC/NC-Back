@@ -112,7 +112,7 @@ func LoginController(userModule *modules.UserModule, tokenRepo repository.UserTo
 
 }
 
-func LogoutController(tokenRepo repository.UserTokens, tokenModule *modules.TokenModule) gin.HandlerFunc {
+func LogoutController( tokenModule *modules.TokenModule) gin.HandlerFunc {
 
 	return func(ctx *gin.Context) {
 		user_token, _ := ctx.Get("token")
