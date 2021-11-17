@@ -16,19 +16,21 @@ import (
 
 // initialize modules in here and pass them and use them in controllers
 type Server struct {
-	UserModule *modules.UserModule
-	RoomModule *modules.RoomModule
-	TokenRepo repository.UserTokens
-	router *gin.Engine
+	UserModule  *modules.UserModule
+	RoomModule  *modules.RoomModule
+	TokenModule *modules.TokenModule
+	TokenRepo   repository.UserTokens
+	router      *gin.Engine
 }
 
-func NewServer(userModule *modules.UserModule, roomModule *modules.RoomModule, tokenRepo repository.UserTokens) *Server {
+func NewServer(userModule *modules.UserModule, roomModule *modules.RoomModule, tokenRepo repository.UserTokens, tokenModule *modules.TokenModule) *Server {
 	router := gin.Default()
 	return &Server{
-		router: router,
-		UserModule: userModule,
-		RoomModule: roomModule,
-		TokenRepo: tokenRepo,
+		router:      router,
+		UserModule:  userModule,
+		RoomModule:  roomModule,
+		TokenRepo:   tokenRepo,
+		TokenModule: tokenModule,
 	}
 }
 
@@ -44,5 +46,5 @@ func (s *Server) SetupRoutes() {
 
 	s.router.POST("/user/register", controllers.RegisterController(s.UserModule, s.RoomModule))
 	s.router.POST("/user/login", controllers.LoginController(s.UserModule, s.TokenRepo))
-	s.router.POST("/user/logout", middlewares.IsAuthenticated(s.TokenRepo), controllers.LogoutController(s.TokenRepo))
+	s.router.POST("/user/logout", middlewares.IsAuthenticated(s.TokenRepo), controllers.LogoutController(s.TokenModule))
 }

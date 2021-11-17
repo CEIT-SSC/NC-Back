@@ -9,7 +9,7 @@ import (
 
 func main() {
 	dbConn, err := repository.CreateConnection()
-	if err != nil{
+	if err != nil {
 		panic(err)
 	}
 	fmt.Println("server")
@@ -19,8 +19,9 @@ func main() {
 
 	userModule := &modules.UserModule{UserRepo: userRepo}
 	roomModule := &modules.RoomModule{RoomRepo: roomRepo}
+	tokenModule := &modules.TokenModule{TokenRepo: tokenRepo}
 
-	server := api.NewServer(userModule, roomModule, tokenRepo)
+	server := api.NewServer(userModule, roomModule, tokenRepo, tokenModule)
 	server.SetupRoutes()
 
 	server.StartServer()
