@@ -2,15 +2,15 @@ package token
 
 import (
 	"context"
-	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/pkg/errors"
 	"strconv"
 )
+
 func NewToken(ctx context.Context, input string, randomNumber int) (string, error) {
 	claims := jwt.MapClaims{
-		"user_id":input,
-		"rand": randomNumber,
+		"user_id": input,
+		"rand":    randomNumber,
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
@@ -23,30 +23,22 @@ func NewToken(ctx context.Context, input string, randomNumber int) (string, erro
 	return t, nil
 }
 
-func ParseToken(ctx context.Context, token2 string) (*jwt.Token, error){
+func ParseToken(ctx context.Context, token2 string) (*jwt.Token, error) {
 	token, err := jwt.Parse(token2, func(token *jwt.Token) (interface{}, error) {
 		return []byte("key"), nil
 	})
-	for key, val := range token.Claims.(jwt.MapClaims) {
-		fmt.Printf("Key: %v, value: %v\n", key, val)
-	}
-	fmt.Println(err)
 	return token, err
 }
 
-func GetUserID(ctx context.Context, token string) (int, error){
+func GetUserID(ctx context.Context, token string) (int, error) {
 	parsedToken, err := ParseToken(ctx, token)
-	if err!= nil{
-		fmt.Println("test2")
+	if err != nil {
 		return -1, err
 	}
 	claims, ok := parsedToken.Claims.(jwt.MapClaims)
-	if !ok{
-		fmt.Println("test1")
-		return -1,errors.New("idk")
+	if !ok {
+		return -1, errors.New("Failed to parse token")
 	}
 	userIDInt, _ := strconv.Atoi(claims["user_id"].(string))
-	fmt.Println("test3")
 	return userIDInt, nil
 }
-
