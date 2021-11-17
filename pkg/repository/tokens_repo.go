@@ -22,16 +22,25 @@ func NewTokenRepo(db *sql.DB) UserTokens {
 }
 
 func (u *UserTokenImpl) GetUserTokens(ctx context.Context, userID int) ([]string, error) {
-	sqlStatement := `SELECT * FROM user_tokens WHERE user_id = $1;`
-	row := u.db.QueryRow(sqlStatement, userID)
-	err := row.Scan("token")
+	var tokens []string
+
+	sqlStatement := `SELECT token FROM user_tokens WHERE user_id = $1;`
+	rows, err := u.db.Query(sqlStatement, userID)
 	if err == sql.ErrNoRows {
 		return nil, errors.New("no token found")
 	}
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-	return nil, nil
+	for rows.Next(){
+		var token string
+		err := rows.Scan(&token)
+		if err != nil {
+			return nil, err
+		}
+		tokens = append(tokens, token)
+	}
+	return tokens, nil
 }
 
 func (u UserTokenImpl) CreateNewToken(ctx context.Context, userID int, token string) error {

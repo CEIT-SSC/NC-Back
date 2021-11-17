@@ -11,6 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 	_ "github.com/pkg/errors"
 	"math/rand"
+	"time"
 )
 
 func RegisterController(userModule *modules.UserModule, roomModule *modules.RoomModule) gin.HandlerFunc {
@@ -62,6 +63,7 @@ func RegisterController(userModule *modules.UserModule, roomModule *modules.Room
 func LoginController(userModule *modules.UserModule, tokenRepo repository.UserTokens) gin.HandlerFunc {
 
 	return func(ctx *gin.Context) {
+		rand.Seed(time.Now().UnixNano())
 		user := &models.LoginUser{}
 		err := ctx.ShouldBindJSON(user)
 		if err != nil {
@@ -71,7 +73,6 @@ func LoginController(userModule *modules.UserModule, tokenRepo repository.UserTo
 			})
 			return
 		}
-		fmt.Println(user)
 		userInfo,err := userModule.GetUserByUsername(user.Username)
 		if userInfo == nil && err == error2.ErrNoUserFound{
 			ctx.JSON(404,gin.H{
@@ -84,7 +85,6 @@ func LoginController(userModule *modules.UserModule, tokenRepo repository.UserTo
 				"error":  err.Error(),
 			})
 		}
-		fmt.Println(userInfo)
 		UserToken, err := token.NewToken(context.Background(), fmt.Sprintf("%d", userInfo.ID), rand.Int())
 		if err != nil {
 			ctx.JSON(422, gin.H{
@@ -114,6 +114,7 @@ func LoginController(userModule *modules.UserModule, tokenRepo repository.UserTo
 func LogoutController(tokenRepo repository.UserTokens) gin.HandlerFunc {
 
 	return func(ctx *gin.Context) {
+		fmt.Println(ctx.Get("user_id"))
 	}
 
 }
