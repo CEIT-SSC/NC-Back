@@ -117,7 +117,14 @@ func LogoutController(tokenModule *modules.TokenModule) gin.HandlerFunc {
 		userToken, _ := ctx.Get("token")
 		userId, _ := ctx.Get("user_id")
 		userIdInt, _ := strconv.Atoi(fmt.Sprintf("%d", userId))
-		tokenModule.RemoveToken(context.Background(), fmt.Sprintf("%s", userToken), userIdInt)
+		err := tokenModule.RemoveToken(context.Background(), fmt.Sprintf("%s", userToken), userIdInt)
+		if err != nil {
+			ctx.JSON(422, gin.H{
+				"error": err.Error(),
+				"type":  "token_repo",
+			})
+			return
+		}
 		ctx.JSON(200, gin.H{
 			"message": "user logged out successfully",
 		})
