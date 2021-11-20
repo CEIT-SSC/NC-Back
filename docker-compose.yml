@@ -16,15 +16,15 @@ services:
     ports:
       - "5432:5432"
 
-#  nc_back:
-#    build: .
-#    environment:
-#      POSTGRES_USER: "test_user"
-#      POSTGRES_PASSWORD: "test123"
-#      POSTGRES_DB: "test_db"
-#      POSTGRES_PORT: "5432"
-#      POSTGRES_HOST: "pg_test"
-#    depends_on:
-#      - "pg_test"
-#    ports:
-#      - "8080:8080"
+  nc_back:
+    build: .
+    environment:
+      POSTGRES_USER: "test_user"
+      POSTGRES_PASSWORD: "test123"
+      POSTGRES_DB: "test_db"
+      POSTGRES_PORT: "5432"
+      POSTGRES_HOST: "pg_test"
+    depends_on:
+      - "pg_test"
+    ports:
+      - "8080:8080"
