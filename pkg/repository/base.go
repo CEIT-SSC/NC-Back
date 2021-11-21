@@ -3,20 +3,18 @@ package repository
 import (
 	"database/sql"
 	"fmt"
-	"github.com/joho/godotenv"
 	_ "github.com/lib/pq" // postgres golang driver
-	"log"
 	"os"
 )
 
 
 func CreateConnection() (*sql.DB, error) {
 	//Open the connection
-	err := godotenv.Load(".env")
-
-	if err != nil {
-		log.Fatalf("Error loading .env file")
-	}
+	//err := godotenv.Load(".env")
+	//
+	//if err != nil {
+	//	log.Fatalf("Error loading .env file")
+	//}
 
 	dbUsername := os.Getenv("POSTGRES_USER")
 	password := os.Getenv("POSTGRES_PASSWORD")
