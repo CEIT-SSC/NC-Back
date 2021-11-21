@@ -14,7 +14,7 @@ CREATE TABLE "rooms"
 (
     "user_id"     int,
     "room_title"  varchar,
-    "room_state"  jsonb,
+    "room_state"  varchar,
     "is_complete" boolean,
     "score"       int,
     PRIMARY KEY ("user_id", "room_title")
