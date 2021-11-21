@@ -38,12 +38,8 @@ func (s *Server) StartServer() {
 	log.Fatal(http.ListenAndServe(":8080", s.router))
 }
 
-//TODO: add these routes
-//     /user/register: should create user (using modules) and their empty rooms
-//     /user/login: should return token
-
 func (s *Server) SetupRoutes() {
-
+	s.router.Use(middlewares.CORSMiddleware)
 	s.router.POST("/user/register", controllers.RegisterController(s.UserModule, s.RoomModule))
 	s.router.POST("/user/login", controllers.LoginController(s.UserModule, s.TokenRepo))
 	s.router.POST("/user/logout", middlewares.IsAuthenticated(s.TokenRepo), controllers.LogoutController(s.TokenModule))
